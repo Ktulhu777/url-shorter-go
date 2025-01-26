@@ -1,0 +1,4 @@
+/storage/storage.db
+.vscode
+config/local.yaml
+cmd/url-shorter/__debug*
