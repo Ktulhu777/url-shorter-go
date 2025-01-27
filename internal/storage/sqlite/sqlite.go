@@ -33,22 +33,6 @@ func NewStorage(dbPath string) (*Storage, error) {
 		return nil, fmt.Errorf("%s: %w", fn, err)
 	}
 
-	stmt, err := db.Prepare(`
-	CREATE TABLE IF NOT EXISTS url(
-		id INTEGER PRIMARY KEY,
-		alias TEXT NOT NULL UNIQUE,
-		url TEXT NOT NULL);
-	CREATE INDEX IF NOT EXISTS idx_alias ON url(alias);
-	`)
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", fn, err)
-	}
-
-	_, err = stmt.Exec()
-	if err != nil {
-		return nil, fmt.Errorf("%s: %w", fn, err)
-	}
-
 	return &Storage{db: db}, nil
 }
 
@@ -128,13 +112,13 @@ func (s *Storage) DeleteURL(id int) error {
 func (s *Storage) IsAliasExists(alias string) (bool, error) {
 	const fn = "torage.sqlite.IsAliasExists"
 	
-	stmt, err := s.db.Prepare("SELECT COUNT(*) FROM urls WHERE alias = ?")
+	stmt, err := s.db.Prepare("SELECT COUNT(*) FROM url WHERE alias = ?")
 	if err != nil {
 		return false, fmt.Errorf("%s: prepare statement: %w", fn, err)
 	}
 
 	var count int 
-	err = stmt.QueryRow().Scan(&count)
+	err = stmt.QueryRow(alias).Scan(&count)
 	if errors.Is(err, sql.ErrNoRows) {
 		return false, storage.ErrURLNotFound
 	}

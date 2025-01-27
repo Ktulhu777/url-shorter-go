@@ -66,6 +66,7 @@ func New(log *slog.Logger, URLSaver URLSaver) http.HandlerFunc {
 		if alias == "" {
 			alias = random.NewRandomString(aliasLength)
 		}
+
 		if exists, err := URLSaver.IsAliasExists(alias); err != nil {
 			log.Error("failed to check alias uniqueness", sl.Err(err))
 			render.JSON(w, r, resp.Error("failed to check alias uniqueness"))
