@@ -10,6 +10,7 @@ import (
 	"url-shorter/internal/http-server/handlers/redirect"
 	"url-shorter/internal/http-server/handlers/url/save"
 	mwLogger "url-shorter/internal/http-server/middleware/logger"
+	myMiddleware "url-shorter/internal/http-server/middleware/authentication"
 	"url-shorter/internal/lib/logger/sl"
 	"url-shorter/internal/storage/sqlite"
 
@@ -45,9 +46,14 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Post("/url", save.New(log, storage))
-	router.Delete("/url/{id}", delete.New(log, storage))
 	router.Get("/{alias}", redirect.New(log, storage))
+
+	authMiddleware := myMiddleware.BasicAuthMiddleware(log, storage)
+	router.Route("/url", func(r chi.Router) {
+		r.Use(authMiddleware)
+		r.Post("/", save.New(log, storage))
+		r.Delete("/{id}", delete.New(log, storage))
+	})
 
 	router.Post("/register", register.New(log, storage))
 
