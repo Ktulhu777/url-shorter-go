@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"url-shorter/internal/config"
+	"url-shorter/internal/http-server/handlers/auth/register"
 	"url-shorter/internal/http-server/handlers/delete"
 	"url-shorter/internal/http-server/handlers/redirect"
 	"url-shorter/internal/http-server/handlers/url/save"
@@ -47,6 +48,8 @@ func main() {
 	router.Post("/url", save.New(log, storage))
 	router.Delete("/url/{id}", delete.New(log, storage))
 	router.Get("/{alias}", redirect.New(log, storage))
+
+	router.Post("/register", register.New(log, storage))
 
 	log.Info("starting server", slog.String("address", cfg.Address))
 
