@@ -1,16 +1,14 @@
 package sqlite
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 
-	"url-shorter/internal/storage"
-
 	"github.com/mattn/go-sqlite3"
-	"database/sql"
 
+	"url-shorter/internal/storage"
 )
-
 
 func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 	const fn = "storage.sqlite.SaveURL"
@@ -22,8 +20,7 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 
 	res, err := stmt.Exec(urlToSave, alias)
 	if err != nil {
-		if sqliteErr, ok := err.(sqlite3.Error);
-		ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
+		if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
 			return 0, fmt.Errorf("%s: %w", fn, storage.ErrURLExists)
 		}
 		return 0, fmt.Errorf("%s: %w", fn, err)
@@ -86,14 +83,14 @@ func (s *Storage) DeleteURL(id int) error {
 }
 
 func (s *Storage) IsAliasExists(alias string) (bool, error) {
-	const fn = "torage.sqlite.IsAliasExists"
-	
+	const fn = "storage.sqlite.IsAliasExists"
+
 	stmt, err := s.db.Prepare("SELECT COUNT(*) FROM url WHERE alias = ?")
 	if err != nil {
 		return false, fmt.Errorf("%s: prepare statement: %w", fn, err)
 	}
 
-	var count int 
+	var count int
 	err = stmt.QueryRow(alias).Scan(&count)
 	if errors.Is(err, sql.ErrNoRows) {
 		return false, storage.ErrURLNotFound
@@ -102,6 +99,6 @@ func (s *Storage) IsAliasExists(alias string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("%s: execute statement: %w", fn, err)
 	}
-	
+
 	return count > 0, nil
 }

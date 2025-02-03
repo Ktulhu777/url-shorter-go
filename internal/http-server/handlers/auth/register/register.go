@@ -5,20 +5,20 @@ import (
 	"log/slog"
 	"net/http"
 
-	resp "url-shorter/internal/lib/api/response"
-	"url-shorter/internal/lib/logger/sl"
-	"url-shorter/internal/storage"
-
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
 	"github.com/go-playground/validator/v10"
+
+	resp "url-shorter/internal/lib/api/response"
+	"url-shorter/internal/lib/logger/sl"
+	"url-shorter/internal/storage"
 )
 
 type Request struct {
-    Username   string `json:"username" validate:"required,min=3,max=50,alphanum"`
-    Email      string `json:"email" validate:"required,email"`
-    Password   string `json:"password" validate:"required,min=8"`
-    PasswordRe string `json:"password_re" validate:"required,eqfield=Password"`
+	Username   string `json:"username" validate:"required,min=3,max=50,alphanum"`
+	Email      string `json:"email" validate:"required,email"`
+	Password   string `json:"password" validate:"required,min=8"`
+	PasswordRe string `json:"password_re" validate:"required,eqfield=Password"`
 }
 
 type Response struct {
@@ -46,7 +46,7 @@ func New(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 		if err != nil {
 			log.Error("failed to decode request body", sl.Err(err))
 			w.WriteHeader(http.StatusBadRequest)
-			render.JSON(w,r, resp.Error("failed to decode request"))
+			render.JSON(w, r, resp.Error("failed to decode request"))
 			return
 		}
 
@@ -56,7 +56,7 @@ func New(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 			log.Error("invalid request", sl.Err(err))
 			validatorErr := err.(validator.ValidationErrors)
 			w.WriteHeader(http.StatusBadRequest)
-			render.JSON(w,r, resp.ValidationErrorRegisterUser(validatorErr))
+			render.JSON(w, r, resp.ValidationErrorRegisterUser(validatorErr))
 			return
 		}
 
@@ -80,7 +80,7 @@ func New(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 			log.Error("failed to add user", sl.Err(err))
 			w.WriteHeader(http.StatusBadRequest)
 			render.JSON(w, r, resp.Error("failed to add user"))
-			return			
+			return
 		}
 
 		log.Info("user added", slog.Int64("id", id))
@@ -88,7 +88,7 @@ func New(log *slog.Logger, userSaver UserSaver) http.HandlerFunc {
 		w.WriteHeader(http.StatusCreated)
 		render.JSON(w, r, Response{
 			Response: resp.OK(),
-			ID: id,
+			ID:       id,
 		})
 	}
 }

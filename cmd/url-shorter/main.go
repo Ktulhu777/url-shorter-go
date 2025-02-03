@@ -4,18 +4,19 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
 	"url-shorter/internal/config"
 	"url-shorter/internal/http-server/handlers/auth/register"
 	"url-shorter/internal/http-server/handlers/delete"
 	"url-shorter/internal/http-server/handlers/redirect"
 	"url-shorter/internal/http-server/handlers/url/save"
-	mwLogger "url-shorter/internal/http-server/middleware/logger"
 	myMiddleware "url-shorter/internal/http-server/middleware/authentication"
+	mwLogger "url-shorter/internal/http-server/middleware/logger"
 	"url-shorter/internal/lib/logger/sl"
 	"url-shorter/internal/storage/sqlite"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
@@ -46,7 +47,7 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	router.Get("/{alias}", redirect.New(log, storage))
+	router.Get("/url/{alias}", redirect.New(log, storage))
 
 	authMiddleware := myMiddleware.BasicAuthMiddleware(log, storage)
 	router.Route("/url", func(r chi.Router) {
@@ -60,11 +61,11 @@ func main() {
 	log.Info("starting server", slog.String("address", cfg.Address))
 
 	srv := &http.Server{
-		Addr: cfg.Address,
-		Handler: router,
-		ReadTimeout: cfg.HTTPServer.Timeout,
+		Addr:         cfg.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
 		WriteTimeout: cfg.HTTPServer.Timeout,
-		IdleTimeout: cfg.HTTPServer.Idle_timeout,
+		IdleTimeout:  cfg.HTTPServer.Idle_timeout,
 	}
 
 	if err := srv.ListenAndServe(); err != nil {
@@ -74,7 +75,6 @@ func main() {
 	log.Error("server stopped")
 
 }
-
 
 func setupLogger(env string) *slog.Logger {
 	var log *slog.Logger

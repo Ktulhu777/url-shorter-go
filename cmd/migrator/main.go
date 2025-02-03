@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/golang-migrate/migrate"
-
 	_ "github.com/golang-migrate/migrate/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/source/file"
 )
@@ -38,7 +37,6 @@ func main() {
 	if err := m.Up(); err != nil {
 		if errors.Is(err, migrate.ErrNoChange) {
 			fmt.Println("no migrations to apply")
-
 			return
 		}
 

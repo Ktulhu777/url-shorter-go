@@ -4,12 +4,13 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
-	resp "url-shorter/internal/lib/api/response"
-	"url-shorter/internal/lib/logger/sl"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
+
+	resp "url-shorter/internal/lib/api/response"
+	"url-shorter/internal/lib/logger/sl"
 )
 
 type URLDeleter interface {
@@ -25,8 +26,8 @@ func New(log *slog.Logger, urlDeleter URLDeleter) http.HandlerFunc {
 			slog.String("request_id", middleware.GetReqID(r.Context())),
 		)
 
-		idStr  := chi.URLParam(r, "id")
-		 
+		idStr := chi.URLParam(r, "id")
+
 		id, err := strconv.Atoi(idStr)
 		if err != nil {
 			log.Info("invalid id")

@@ -4,19 +4,19 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	resp "url-shorter/internal/lib/api/response"
-	"url-shorter/internal/lib/logger/sl"
-	"url-shorter/internal/storage"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/render"
+
+	resp "url-shorter/internal/lib/api/response"
+	"url-shorter/internal/lib/logger/sl"
+	"url-shorter/internal/storage"
 )
 
 type URLGetter interface {
 	GetURL(alias string) (string, error)
 }
-
 
 func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +35,6 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 
 			return
 		}
-		
 
 		resURL, err := urlGetter.GetURL(alias)
 		if errors.Is(err, storage.ErrURLNotFound) {
@@ -46,7 +45,6 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 			return
 		}
 
-
 		if err != nil {
 			log.Error("failed to get url", sl.Err(err))
 
@@ -54,7 +52,7 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 
 			return
 		}
-		
+
 		log.Info("got url", slog.String("url", resURL))
 
 		// redirect to found url

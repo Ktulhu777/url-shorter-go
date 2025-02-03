@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log/slog"
 	stdLog "log"
+	"log/slog"
 
 	"github.com/fatih/color"
 )
