@@ -2,3 +2,4 @@
 .vscode
 config/local.yaml
 cmd/url-shorter/__debug*
+cmd/url-shorter/user_info.log

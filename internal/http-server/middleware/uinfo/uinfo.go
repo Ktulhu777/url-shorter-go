@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	workerUinfo "url-shorter/internal/worker/uinfo"
+	workerUInfo "url-shorter/internal/worker/uinfo"
 
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -19,7 +19,7 @@ func GetUserInfo(log *slog.Logger) func(next http.Handler) http.Handler {
 				slog.String("request_id", middleware.GetReqID(r.Context())),
 			)
 			select {
-			case workerUinfo.LogQueue <- workerUinfo.LogData{
+			case workerUInfo.LogQueue <- workerUInfo.LogData{
 				UA:  r.UserAgent(),
 				R:   r,
 				Log: log,

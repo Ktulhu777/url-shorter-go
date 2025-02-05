@@ -61,13 +61,11 @@ func writeLog(ua string, r *http.Request, log *slog.Logger) {
 	const fn = "middleware.uinfo.writeLog"
 	log = log.With(slog.String("fn", fn))
 
-	// Парсим данные пользователя
 	userInfo := parseUserInfo(ua, r)
 
-	// Запись данных в файл
 	file, err := os.OpenFile("user_info.log", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
-		log.Error("Ошибка при открытии файла: %v", sl.Err(err)) // Убедись, что правильно обрабатываешь ошибки
+		log.Error("Ошибка при открытии файла: %v", sl.Err(err)) 
 		return
 	}
 	defer file.Close()
