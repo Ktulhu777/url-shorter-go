@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/mattn/go-sqlite3"
 
@@ -36,26 +37,94 @@ func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 }
 
 func (s *Storage) GetURL(alias string) (string, error) {
-	const fn = "storage.sqlite.GetURL"
+    const fn = "storage.sqlite.GetURL"
 
-	stmt, err := s.db.Prepare("SELECT url FROM url WHERE alias = ?")
-	if err != nil {
-		return "", fmt.Errorf("%s: prepare statement: %w", fn, err)
-	}
+    tx, err := s.db.Begin()
+    if err != nil {
+        return "", fmt.Errorf("%s: failed to start transaction: %w", fn, err)
+    }
 
-	var resURL string
+    // Проверяем, есть ли клики (clicks > 0) перед тем, как обновлять
+    var clicks int
+    err = tx.QueryRow(`
+        SELECT clicks 
+        FROM url 
+        WHERE alias = ?`, alias).Scan(&clicks)
+    if err != nil {
+        tx.Rollback()
+        if errors.Is(err, sql.ErrNoRows) {
+            return "", storage.ErrURLNotFound // URL не найден
+        }
+        return "", fmt.Errorf("%s: failed to fetch clicks: %w", fn, err)
+    }
+	log.Printf("МЫ ТУТ 1")
+    log.Printf("Current clicks for alias %s: %d", alias, clicks)
 
-	err = stmt.QueryRow(alias).Scan(&resURL)
-	if errors.Is(err, sql.ErrNoRows) {
-		return "", storage.ErrURLNotFound
-	}
+    if clicks <= 0 {
+        tx.Rollback()
+        return "", storage.ErrURLNotFound // Если кликов 0, URL не найден
+    }
 
-	if err != nil {
-		return "", fmt.Errorf("%s: execute statement: %w", fn, err)
-	}
+    // Подготавливаем SQL-запрос для обновления кликов
+    stmt, err := tx.Prepare(`
+        UPDATE url
+        SET clicks = clicks - 1
+        WHERE alias = ? AND clicks > 0
+        RETURNING url;
+    `)
+    if err != nil {
+        tx.Rollback()
+        return "", fmt.Errorf("%s: failed to prepare statement: %w", fn, err)
+    }
+    defer stmt.Close()
 
-	return resURL, nil
+    // Выполняем запрос для обновления кликов и получения URL
+    var resURL string
+    err = stmt.QueryRow(alias).Scan(&resURL)
+    if err != nil {
+        tx.Rollback()
+        if errors.Is(err, sql.ErrNoRows) {
+            return "", storage.ErrURLNotFound
+        }
+        return "", fmt.Errorf("%s: query failed: %w", fn, err)
+    }
+
+	log.Printf("МЫ ТУТ 2")
+    log.Printf("Updated URL for alias %s: %s", alias, resURL)
+
+    // Коммитим транзакцию после успешного выполнения запроса
+    if err := tx.Commit(); err != nil {
+        return "", fmt.Errorf("%s: failed to commit transaction: %w", fn, err)
+    }
+	log.Printf("МЫ ТУТ 3")
+    log.Printf("Transaction committed with URL: %s", resURL)
+
+    return resURL, nil
 }
+
+
+
+
+	// const fn = "storage.sqlite.GetURL"
+
+	// stmt, err := s.db.Prepare("SELECT url FROM url WHERE alias = ?")
+	// if err != nil {
+	// 	return "", fmt.Errorf("%s: prepare statement: %w", fn, err)
+	// }
+
+	// var resURL string
+
+	// err = stmt.QueryRow(alias).Scan(&resURL)
+	// if errors.Is(err, sql.ErrNoRows) {
+	// 	return "", storage.ErrURLNotFound
+	// }
+
+	// if err != nil {
+	// 	return "", fmt.Errorf("%s: execute statement: %w", fn, err)
+	// }
+
+	// return resURL, nil
+// }
 
 func (s *Storage) DeleteURL(id int) error {
 	const fn = "storage.sqlite.DeleteURL"

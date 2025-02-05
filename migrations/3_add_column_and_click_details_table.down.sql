@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS click_details;
+ALTER TABLE url DROP COLUMN IF EXISTS clicks;

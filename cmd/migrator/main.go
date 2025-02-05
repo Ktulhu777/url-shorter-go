@@ -10,6 +10,8 @@ import (
 	_ "github.com/golang-migrate/migrate/source/file"
 )
 
+// go run ./cmd/migrator --storage-path=./storage/storage.db --migrations-path=./migrations
+
 func main() {
 	var storagePath, migrationsPath, migrationsTable string
 
@@ -43,5 +45,5 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("migrations applied successfull")
+	fmt.Println("migrations applied successful")
 }

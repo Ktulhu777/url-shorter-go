@@ -15,6 +15,7 @@ import (
 	"url-shorter/internal/http-server/handlers/url/save"
 	myMiddleware "url-shorter/internal/http-server/middleware/authentication"
 	mwLogger "url-shorter/internal/http-server/middleware/logger"
+	mwUserInfo "url-shorter/internal/http-server/middleware/uinfo"
 	"url-shorter/internal/lib/logger/sl"
 	"url-shorter/internal/storage/sqlite"
 )
@@ -43,6 +44,7 @@ func main() {
 
 	router.Use(middleware.RequestID)
 	router.Use(mwLogger.New(log))
+	router.Use(mwUserInfo.GetUserInfo(log))
 	router.Use(middleware.RealIP)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)

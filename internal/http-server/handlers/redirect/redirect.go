@@ -19,43 +19,42 @@ type URLGetter interface {
 }
 
 func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		const fn = "handlers.redirect.New"
+    return func(w http.ResponseWriter, r *http.Request) {
+        const fn = "handlers.redirect.New"
 
-		log := log.With(
-			slog.String("fn", fn),
-			slog.String("request_id", middleware.GetReqID(r.Context())),
-		)
+        log := log.With(
+            slog.String("fn", fn),
+            slog.String("request_id", middleware.GetReqID(r.Context())),
+            slog.String("method", r.Method),
+            slog.String("url", r.URL.String()),
+        )
 
-		alias := chi.URLParam(r, "alias")
-		if alias == "" {
-			log.Info("alias is empty")
+        log.Info("New handler called", slog.String("method", r.Method), slog.String("url", r.URL.String()))
 
-			render.JSON(w, r, resp.Error("invalid request"))
+        alias := chi.URLParam(r, "alias")
+        if alias == "" {
+            log.Info("alias is empty")
+            render.JSON(w, r, resp.Error("invalid request"))
+            return
+        }
 
-			return
-		}
+        resURL, err := urlGetter.GetURL(alias)
+        if errors.Is(err, storage.ErrURLNotFound) {
+            log.Info("url not found", slog.String("alias", alias))
+            render.JSON(w, r, resp.Error("not found"))
+            return
+        }
 
-		resURL, err := urlGetter.GetURL(alias)
-		if errors.Is(err, storage.ErrURLNotFound) {
-			log.Info("url not found", "alias", alias)
+        if err != nil {
+            log.Error("failed to get url", sl.Err(err))
+            render.JSON(w, r, resp.Error("internal error"))
+            return
+        }
 
-			render.JSON(w, r, resp.Error("not found"))
+        log.Info("got url", slog.String("url", resURL))
 
-			return
-		}
-
-		if err != nil {
-			log.Error("failed to get url", sl.Err(err))
-
-			render.JSON(w, r, resp.Error("internal error"))
-
-			return
-		}
-
-		log.Info("got url", slog.String("url", resURL))
-
-		// redirect to found url
-		http.Redirect(w, r, resURL, http.StatusFound)
-	}
+        // redirect to found url
+        http.Redirect(w, r, resURL, http.StatusFound)
+    }
 }
+
