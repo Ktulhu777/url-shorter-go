@@ -8,6 +8,7 @@ import (
 	resp "url-shorter/internal/lib/api/response"
 	"url-shorter/internal/lib/logger/sl"
 	"url-shorter/internal/lib/random"
+	"url-shorter/internal/lib/url_validation"
 	"url-shorter/internal/storage"
 
 	"github.com/go-chi/chi/v5/middleware"
@@ -60,6 +61,25 @@ func New(log *slog.Logger, URLSaver URLSaver) http.HandlerFunc {
 			validatorErr := err.(validator.ValidationErrors)
 			render.JSON(w,r, resp.ValidationError(validatorErr))
 			return
+		}
+
+		if err := url_validation.IsValidURL(req.URL); err != nil {
+			if errors.Is(err, url_validation.ErrContainsSpace) {
+				log.Info("%w", sl.Err(err))
+				w.WriteHeader(http.StatusBadRequest)
+				render.JSON(w, r, resp.Error("url contains a space"))
+				return
+			} else if errors.Is(err, url_validation.ErrEmpty) {
+				log.Info("%w", sl.Err(err))
+				w.WriteHeader(http.StatusBadRequest)
+				render.JSON(w, r, resp.Error("url is empty"))
+				return
+			} else {
+				log.Info("%w", sl.Err(err))
+				w.WriteHeader(http.StatusBadRequest)
+				render.JSON(w, r, resp.Error("url is not valid"))
+				return
+			}
 		}
 		
 		alias := req.Alias
